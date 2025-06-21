@@ -8,11 +8,10 @@
         body {
             font-family: 'Tektur', sans-serif;
             margin: 0;
-            padding: 20 px;
+            padding: 10px;
             line-height: 1.5;
-            /* Автоподстройка под тему */
-            color: var(--text-color, white);
-            background: var(--bg-color, transparent);
+            /* Автоподстройка под тему без фона */
+            color: var(--text-color, inherit);
         }
     </style>
 </head>
@@ -22,30 +21,31 @@
     <script>
         // Получаем текст из URL
         const params = new URLSearchParams(window.location.search);
-        const text = params.get('text') || "Текст не передан";
-        
-        // Определяем тему
-        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        document.body.style.setProperty('--text-color', isDark ? 'white' : 'black');
-        document.body.style.setProperty('--bg-color', isDark ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.7)');
+        document.getElementById('content').textContent = params.get('text') || "";
 
-        // Вставляем текст
-        document.getElementById('content').innerHTML = text;
+        // Автоматически определяем тему Teletype
+        function detectTheme() {
+            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.body.style.setProperty('--text-color', isDark ? '#ffffff' : '#000000');
+        }
 
-        // Автоподстройка высоты
+        // Обновляем высоту iframe
         function updateHeight() {
-            const height = document.body.scrollHeight;
-            window.parent.postMessage({ 
-                type: 'iframeResize', 
-                height: height 
+            window.parent.postMessage({
+                type: 'iframeResize',
+                height: document.body.scrollHeight
             }, '*');
         }
 
-        window.addEventListener('load', updateHeight);
+        detectTheme();
+        updateHeight();
+        
+        // Следим за изменениями
         new MutationObserver(updateHeight).observe(document.body, {
             childList: true,
             subtree: true
         });
+        window.matchMedia('(prefers-color-scheme: dark)').addListener(detectTheme);
     </script>
 </body>
 </html>
