@@ -7,25 +7,32 @@
     <style>
         body {
             font-family: 'Tektur', sans-serif;
-            color: white;
-            background: transparent;
             margin: 0;
-            padding: 20px;
+            padding: 20 px;
             line-height: 1.5;
+            /* Автоподстройка под тему */
+            color: var(--text-color, white);
+            background: var(--bg-color, transparent);
         }
     </style>
 </head>
 <body>
-    <!-- Текст будет вставляться динамически -->
     <div id="content"></div>
 
     <script>
-        // Получаем текст из URL-параметра
+        // Получаем текст из URL
         const params = new URLSearchParams(window.location.search);
         const text = params.get('text') || "Текст не передан";
+        
+        // Определяем тему
+        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.body.style.setProperty('--text-color', isDark ? 'white' : 'black');
+        document.body.style.setProperty('--bg-color', isDark ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.7)');
+
+        // Вставляем текст
         document.getElementById('content').innerHTML = text;
 
-        // Автоподстройка высоты iframe
+        // Автоподстройка высоты
         function updateHeight() {
             const height = document.body.scrollHeight;
             window.parent.postMessage({ 
