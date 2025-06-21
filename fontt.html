@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+           font-family: "Tektur", sans-serif;
+           font-optical-sizing: auto;
+           font-weight: 400;
+           font-style: normal;
+           font-variation-settings:
+           "wdth" 100;
+        }
+        .content {
+            max-width: 100%;
+            overflow-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div class="content" id="content">
+        «Ты даже не поймёшь, что уже проиграл.»
+    </div>
+
+    <script>
+        // Автоподстройка высоты
+        function resizeIframe() {
+            const content = document.getElementById('content');
+            const height = content.scrollHeight;
+            window.parent.postMessage({
+                type: 'iframeResize',
+                height: height
+            }, '*');
+        }
+
+        // Подписка на изменения
+        new MutationObserver(resizeIframe).observe(
+            document.getElementById('content'), 
+            { attributes: true, childList: true, subtree: true }
+        );
+
+        window.addEventListener('load', resizeIframe);
+        window.addEventListener('resize', resizeIframe);
+    </script>
+</body>
+</html>
