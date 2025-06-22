@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Tektur:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      font-family: 'Tektur', sans-serif;
+      color: #e91e63;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    #typewriter {
+      white-space: nowrap;
+      overflow: hidden;
+      border-right: 2px solid #e91e63;
+      animation: blink-caret 0.8s step-end infinite;
+    }
+
+    @keyframes blink-caret {
+      50% { border-color: transparent; }
+    }
+  </style>
+</head>
+<body>
+  <div id="typewriter"></div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const text = decodeURIComponent(params.get("text") || "Hello world");
+    const el = document.getElementById("typewriter");
+
+    let i = 0;
+    function type() {
+      if (i < text.length) {
+        el.textContent += text.charAt(i);
+        i++;
+        setTimeout(type, 50); // скорость печати
+      }
+    }
+
+    type();
+  </script>
+</body>
+</html>
