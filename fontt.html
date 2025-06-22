@@ -5,22 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Tektur:wght@400;500&display=swap" rel="stylesheet">
     <style>
+        :root {
+            color-scheme: light dark;
+        }
+
         body {
             font-family: 'Tektur', sans-serif;
             margin: 0;
-            padding: 10px;
-            /* Центрирование текста */
+            padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            box-sizing: border-box;
-            /* Автоподстройка под тему */
-            color: var(--text-color, inherit);
+            background: transparent !important;
+            color: var(--teletype-text-color, #000000);
         }
+
         #content {
             text-align: center;
-            max-width: 100%;
+            padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
+            word-break: break-word;
         }
     </style>
 </head>
@@ -30,31 +36,45 @@
     <script>
         // Получаем текст из URL
         const params = new URLSearchParams(window.location.search);
-        document.getElementById('content').textContent = params.get('text') || "";
+        const content = document.getElementById('content');
+        content.textContent = decodeURIComponent(params.get('text') || "");
 
-        // Автоматически определяем тему
-        function detectTheme() {
-            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            document.body.style.setProperty('--text-color', isDark ? '#ffffff' : '#000000');
+        // Обновление темы
+        function updateTheme() {
+            const isDark = window.matchMedia &&
+                           window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            const textColor = isDark ? '#ffffff' : '#000000';
+            document.body.style.setProperty('--teletype-text-color', textColor);
+            document.body.style.color = textColor;
         }
 
-        // Обновляем высоту iframe
+        // Корректировка высоты
         function updateHeight() {
-            window.parent.postMessage({
-                type: 'iframeResize',
-                height: document.body.scrollHeight
-            }, '*');
+            const height = document.documentElement.scrollHeight;
+            try {
+                window.parent.postMessage({
+                    type: 'iframeResize',
+                    height: height
+                }, '*');
+            } catch (e) {}
         }
 
-        detectTheme();
+        // Инициализация
+        updateTheme();
         updateHeight();
-        
-        // Следим за изменениями
-        new MutationObserver(updateHeight).observe(document.body, {
+
+        // Следим за изменениями контента
+        new MutationObserver(updateHeight).observe(content, {
             childList: true,
+            characterData: true,
             subtree: true
         });
-        window.matchMedia('(prefers-color-scheme: dark)').addListener(detectTheme);
+
+        // Следим за сменой темы
+        if (window.matchMedia) {
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateTheme);
+        }
     </script>
 </body>
 </html>
