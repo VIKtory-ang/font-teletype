@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    :root {
+      --bg-light: rgba(240, 240, 255, 0.8);
+      --bg-dark: rgba(60, 60, 90, 0.4);
+      --text-light: #000;
+      --text-dark: #fff;
+    }
+
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: transparent;
+    }
+
+    .quote-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(100, 100, 255, 0.3);
+      background-color: var(--bg-light);
+      color: var(--text-light);
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+
+    .icon {
+      font-size: 20px;
+      line-height: 1;
+      opacity: 0.7;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .quote-box {
+        background-color: var(--bg-dark);
+        color: var(--text-dark);
+        border-color: rgba(180, 180, 255, 0.2);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="quote-box">
+    <div class="icon">💡</div>
+    <div id="quote-text">Загрузка...</div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const text = params.get('text') || 'Цитата не указана.';
+    document.getElementById('quote-text').textContent = decodeURIComponent(text);
+  </script>
+</body>
+</html>
