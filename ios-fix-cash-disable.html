@@ -51,46 +51,22 @@
         body.force-dark {
             color: var(--text-color-dark) !important;
         }
-        #wrapper {
-            background-color: rgba(255, 0, 128, 0.3); /* Малиновый фон с 30% прозрачности */
-            border-radius: 16px;
-            padding: 16px;
-            width: 100%;
-            box-sizing: border-box;
-
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            overflow-x: auto;
-        }
+        
         #content {
             text-align: center;
             padding: 10px;
             width: 60%;
             box-sizing: border-box;
-            word-break: normal;
+            word-break: break-word;
+            /* Принудительный рендеринг */
             will-change: color;
             backface-visibility: hidden;
             transform: translateZ(0);
-            white-space: nowrap;
-            overflow-wrap: normal;
         }
-    
-
-/* На маленьких экранах — разрешаем перенос */
-@media (max-width: 500px) {
-    #wrapper {
-        white-space: normal;
-    }
-}
-        
     </style>
 </head>
 <body>
-    <div id="wrapper">
-        <div id="content"></div>
-    </div>
+    <div id="content"></div>
     <script>
         // Кэшируем элементы
         const contentElement = document.getElementById('content');
@@ -260,7 +236,7 @@
                 const theme = event.data.theme;
                 currentTheme = theme; // Обновляем кэш
                 body.classList.remove('force-light', 'force-dark');
-                body.classList.add(`force-${theme}`);
+                body.classList.add(force-${theme});
                 
                 const color = theme === 'dark' ? '#fff' : '#000';
                 body.style.color = color;
