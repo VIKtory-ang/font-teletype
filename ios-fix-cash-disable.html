@@ -64,12 +64,16 @@
             transform: translateZ(0);
         }
         #wrapper {
-            background-color: rgba(255, 0, 128, 0.3);
+            background-color: rgba(255, 0, 128, 0.3); /* Полупрозрачный малиновый */
             border-radius: 12px;
             padding: 20px;
             width: 70%;
             box-sizing: border-box;
-            display: inline-block;
+
+            display: flex;
+            justify-content: center;    /* Горизонтальное выравнивание */
+            align-items: center;        /* ВЕРТИКАЛЬНОЕ выравнивание */
+            text-align: center;
         }
     </style>
 </head>
