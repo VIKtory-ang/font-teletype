@@ -77,15 +77,38 @@
         const text = params.get('text') || "Тестовый текст для проверки смены темы. Переключите тему устройства чтобы увидеть быстрое обновление цвета текста.";
         contentElement.textContent = text;
 
-        // 2. Определение устройства
+        // 2. Определение устройства и браузера
         const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
         const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+        const isTelegram = /telegram/i.test(navigator.userAgent) || 
+                          window.TelegramWebviewProxy !== undefined ||
+                          window.Telegram !== undefined ||
+                          document.referrer.includes('t.me') ||
+                          window.location.href.includes('tg://');
+        const isWebView = window.navigator.standalone !== undefined || 
+                         window.matchMedia('(display-mode: standalone)').matches ||
+                         /webview|wv/i.test(navigator.userAgent);
         
         // Переменная для отслеживания текущей темы
         let currentTheme = null;
         
-        // 3. Функция определения темы с множественными проверками
+        // 3. Функция определения темы с особой обработкой для Telegram
         function detectTheme() {
+            // Специальная обработка для Telegram WebView
+            if (isTelegram) {
+                // Метод 1: Попытка получить тему из Telegram WebApp API
+                if (window.Telegram && window.Telegram.WebApp) {
+                    const tgTheme = window.Telegram.WebApp.colorScheme;
+                    if (tgTheme) {
+                        return tgTheme === 'dark' ? 'dark' : 'light';
+                    }
+                }
+                
+                // Метод 2: Анализ времени суток для Telegram (fallback)
+                const hour = new Date().getHours();
+                return (hour >= 20 || hour <= 7) ? 'dark' : 'light';
+            }
+            
             // Способ 1: через media query
             const darkMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
             
@@ -208,12 +231,16 @@
             }
         }
         
-        // 5. Обработчики событий (адаптивные под устройство)
+        // 5. Обработчики событий (адаптивные под устройство и браузер)
         let themeUpdateTimeout;
         
         const darkMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
         
-        if (isiOS) {
+        if (isTelegram) {
+            // Для Telegram WebView - обработка может не работать стандартно
+            // Полагаемся на интервалы и пользовательские взаимодействия
+            console.log('Telegram WebView detected - using fallback theme detection');
+        } else if (isiOS) {
             // Для iOS - с небольшой задержкой из-за особенностей системы
             darkMediaQuery.addEventListener('change', () => {
                 setTimeout(applyTheme, 50);
@@ -250,8 +277,38 @@
             }
         });
         
-        // 6. Оптимизация для разных устройств
-        if (isiOS) {
+        // 6. Оптимизация для разных устройств и браузеров
+        if (isTelegram) {
+            // Специальная обработка для Telegram WebView
+            
+            // Слушаем события Telegram WebApp
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.onEvent('themeChanged', () => {
+                    setTimeout(applyTheme, 50);
+                });
+            }
+            
+            // Очень частое обновление для Telegram (каждые 2 секунды)
+            setInterval(() => {
+                const newTheme = detectTheme();
+                if (newTheme !== currentTheme) {
+                    applyTheme();
+                }
+            }, 2000);
+            
+            // Дополнительные проверки при взаимодействии пользователя
+            ['touchstart', 'click', 'scroll'].forEach(event => {
+                document.addEventListener(event, () => {
+                    setTimeout(() => {
+                        const newTheme = detectTheme();
+                        if (newTheme !== currentTheme) {
+                            applyTheme();
+                        }
+                    }, 100);
+                }, { passive: true });
+            });
+            
+        } else if (isiOS) {
             // Для iOS - более частое обновление
             let iosUpdateInterval = setInterval(() => {
                 applyTheme();
