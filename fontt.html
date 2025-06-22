@@ -8,10 +8,19 @@
         body {
             font-family: 'Tektur', sans-serif;
             margin: 0;
-            padding: 10px;
-            line-height: 1.5;
-            /* Автоподстройка под тему без фона */
-            color: var(--text-color, inherit);
+            padding: 10 px;
+            /* Центрирование текста */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100 vh;
+            box-sizing: border-box;
+            /* Автоподстройка под тему */
+            color: var (--text-color, inherit);
+        }
+        #content {
+            text-align: center;
+            max-width: 100 %;
         }
     </style>
 </head>
@@ -23,7 +32,7 @@
         const params = new URLSearchParams(window.location.search);
         document.getElementById('content').textContent = params.get('text') || "";
 
-        // Автоматически определяем тему Teletype
+        // Автоматически определяем тему
         function detectTheme() {
             const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             document.body.style.setProperty('--text-color', isDark ? '#ffffff' : '#000000');
