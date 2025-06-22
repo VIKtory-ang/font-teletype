@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=Tektur:wght@400;500&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Tektur:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     html, body {
       margin: 0;
@@ -11,14 +11,17 @@
       background: transparent;
       font-family: 'Tektur', sans-serif;
       color: #e91e63;
-      font-size: 30 px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
+      font-size: 36 px;
+      line-height: 1.4;
+      box-sizing: border-box;
+    }
+
+    #wrapper {
+      padding: 20px;
     }
 
     #typewriter {
+      display: inline-block;
       white-space: nowrap;
       overflow: hidden;
       border-right: 2px solid #e91e63;
@@ -31,7 +34,9 @@
   </style>
 </head>
 <body>
-  <div id="typewriter"></div>
+  <div id="wrapper">
+    <div id="typewriter"></div>
+  </div>
 
   <script>
     const params = new URLSearchParams(window.location.search);
@@ -43,11 +48,26 @@
       if (i < text.length) {
         el.textContent += text.charAt(i);
         i++;
-        setTimeout(type, 50); // скорость печати
+        resize();
+        setTimeout(type, 50);
+      } else {
+        el.style.borderRight = "none"; // отключаем курсор
+        resize();
       }
     }
 
+    function resize() {
+      try {
+        const height = document.documentElement.scrollHeight;
+        window.parent.postMessage({ type: "iframeResize", height }, "*");
+      } catch (e) {
+        // возможно iframe не с теми правами — игнорируем
+      }
+    }
+
+    // инициализация
     type();
+    resize();
   </script>
 </body>
 </html>
