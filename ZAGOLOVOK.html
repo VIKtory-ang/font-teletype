@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Антикеш-метатеги -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <!-- Подключение шрифта -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Stalinist+One&family=Tektur:wght@400..900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --text-color-light: #000;
+            --text-color-dark: #fff;
+        }
+        
+        body {
+            font-family: 'Stalinist One', -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: transparent !important;
+            text-align: center;
+            /* Убираем transition для мгновенного переключения */
+            transition: none;
+        }
+        
+        /* Базовые стили для светлой темы */
+        body {
+            color: var(--text-color-light);
+        }
+        
+        /* Стили для темной темы */
+        @media (prefers-color-scheme: dark) {
+            body {
+                color: var(--text-color-dark);
+            }
+        }
+        
+        /* Принудительные классы для iOS */
+        body.force-light {
+            color: var(--text-color-light) !important;
+        }
+        
+        body.force-dark {
+            color: var(--text-color-dark) !important;
+        }
+        
+        #content {
+            text-align: center;
+            padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
+            word-break: break-word;
+            /* Принудительный рендеринг */
+            will-change: color;
+            backface-visibility: hidden;
+            transform: translateZ(0);
+            font-size: 32px; /* Стандартный увеличенный */
+            font-style: normal;
+            /* font-size: 24px; /* Большой */
+            /* font-size: 32px; /* Очень большой */
+            /* font-size: 1.2em; /* Относительный размер */
+            /* font-size: 1.5rem; /* Относительно корневого элемента */
+            line-height: 1.4; /* Межстрочный интервал для читаемости */
+        }
+    </style>
+</head>
+<body>
+    <div id="content"></div>
+    <script>
+        // Кэшируем элементы
+        const contentElement = document.getElementById('content');
+        const body = document.body;
+        
+        // 1. Загрузка текста
+        const params = new URLSearchParams(window.location.search);
+        const text = params.get('text') || "Тестовый текст для проверки смены темы. Переключите тему устройства чтобы увидеть быстрое обновление цвета текста.";
+        contentElement.textContent = text;
+
+        // 2. Определение устройства и браузера
+        const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+        const isTelegram = /telegram/i.test(navigator.userAgent) || 
+                          window.TelegramWebviewProxy !== undefined ||
+                          window.Telegram !== undefined ||
+                          document.referrer.includes('t.me') ||
+                          window.location.href.includes('tg://');
+        const isWebView = window.navigator.standalone !== undefined || 
+                         window.matchMedia('(display-mode: standalone)').matches ||
+                         /webview|wv/i.test(navigator.userAgent);
+        
+        // Переменная для отслеживания текущей темы
+        let currentTheme = null;
+        
+        // 3. Функция определения темы с особой обработкой для Telegram
+        function detectTheme() {
+            // Специальная обработка для Telegram WebView
+            if (isTelegram) {
+                // Метод 1: Попытка получить тему из Telegram WebApp API
+                if (window.Telegram && window.Telegram.WebApp) {
+                    const tgTheme = window.Telegram.WebApp.colorScheme;
+                    if (tgTheme) {
+                        return tgTheme === 'dark' ? 'dark' : 'light';
+                    }
+                }
+                
+                // Метод 2: Анализ времени суток для Telegram (fallback)
+                const hour = new Date().getHours();
+                return (hour >= 20 || hour <= 7) ? 'dark' : 'light';
+            }
+            
+            // Способ 1: через media query
+            const darkMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+            
+            // Способ 2: через анализ цвета родительского элемента (для iframe)
+            let parentTheme = null;
+            try {
+                if (window.parent !== window) {
+                    // Пытаемся получить информацию от родительского окна
+                    const parentBody = window.parent.document.body;
+                    const parentStyles = window.parent.getComputedStyle(parentBody);
+                    const parentBg = parentStyles.backgroundColor;
+                    const parentColor = parentStyles.color;
+                    
+                    // Анализируем цвета родителя
+                    if (parentBg && parentBg !== 'rgba(0, 0, 0, 0)') {
+                        const rgb = parentBg.match(/\d+/g);
+                        if (rgb) {
+                            const brightness = (parseInt(rgb[0]) * 299 + parseInt(rgb[1]) * 587 + parseInt(rgb[2]) * 114) / 1000;
+                            parentTheme = brightness < 128 ? 'dark' : 'light';
+                        }
+                    }
+                }
+            } catch (e) {
+                // Если не можем получить доступ к родителю - игнорируем
+            }
+            
+            // Способ 3: через время суток (fallback для iOS)
+            const hour = new Date().getHours();
+            const timeBasedTheme = (hour >= 20 || hour <= 7) ? 'dark' : 'light';
+            
+            // Определяем финальную тему
+            let finalTheme;
+            if (parentTheme) {
+                finalTheme = parentTheme;
+            } else if (darkMediaQuery.matches) {
+                finalTheme = 'dark';
+            } else {
+                // Для iOS используем комбинированный подход
+                if (isiOS) {
+                    finalTheme = timeBasedTheme;
+                } else {
+                    finalTheme = 'light';
+                }
+            }
+            
+            return finalTheme;
+        }
+        
+        // 4. Применение темы с принудительным обновлением
+        function applyTheme() {
+            const theme = detectTheme();
+            
+            // Проверяем, изменилась ли тема
+            if (theme === currentTheme) return;
+            currentTheme = theme;
+            
+            // Очищаем предыдущие классы
+            body.classList.remove('force-light', 'force-dark');
+            
+            // Применяем новую тему
+            if (theme === 'dark') {
+                body.classList.add('force-dark');
+                body.style.color = '#fff';
+                contentElement.style.color = '#fff';
+            } else {
+                body.classList.add('force-light');
+                body.style.color = '#000';
+                contentElement.style.color = '#000';
+            }
+            
+            // Принудительное обновление рендеринга
+            forceRerender();
+            
+            // Дополнительное принуждение для iOS
+            if (isiOS) {
+                body.style.webkitFontSmoothing = 'subpixel-antialiased';
+                // Принудительный reflow
+                body.offsetHeight;
+                contentElement.offsetHeight;
+            }
+        }
+        
+        // Функция принудительного перерендеринга (адаптивная под устройство)
+        function forceRerender() {
+            // Сначала проверяем, что текст есть
+            if (!contentElement.textContent) {
+                const params = new URLSearchParams(window.location.search);
+                const text = params.get('text') || "Тестовый текст для проверки смены темы";
+                contentElement.textContent = text;
+            }
+            
+            if (isiOS) {
+                // Для iOS - более агрессивный подход
+                const currentText = contentElement.textContent;
+                contentElement.textContent = '';
+                contentElement.offsetHeight;
+                contentElement.textContent = currentText;
+                
+                contentElement.style.transform = 'translateZ(0.1px)';
+                requestAnimationFrame(() => {
+                    contentElement.style.transform = 'translateZ(0)';
+                });
+            } else if (isMobile) {
+                // Для Android - оптимизированный подход
+                contentElement.style.opacity = '0.99';
+                requestAnimationFrame(() => {
+                    contentElement.style.opacity = '1';
+                });
+                
+                // Принудительный repaint
+                contentElement.style.transform = 'translate3d(0,0,0)';
+                contentElement.offsetHeight;
+                contentElement.style.transform = 'none';
+            } else {
+                // Для десктопа - легкий подход
+                contentElement.style.willChange = 'color';
+                requestAnimationFrame(() => {
+                    contentElement.style.willChange = 'auto';
+                });
+            }
+        }
+        
+        // 5. Обработчики событий (адаптивные под устройство и браузер)
+        let themeUpdateTimeout;
+        
+        const darkMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        
+        if (isTelegram) {
+            // Для Telegram WebView - обработка может не работать стандартно
+            // Полагаемся на интервалы и пользовательские взаимодействия
+            console.log('Telegram WebView detected - using fallback theme detection');
+        } else if (isiOS) {
+            // Для iOS - с небольшой задержкой из-за особенностей системы
+            darkMediaQuery.addEventListener('change', () => {
+                setTimeout(applyTheme, 50);
+                setTimeout(applyTheme, 200);
+            });
+        } else if (isMobile) {
+            // Для Android - мгновенный отклик
+            darkMediaQuery.addEventListener('change', () => {
+                applyTheme();
+                requestAnimationFrame(applyTheme);
+            });
+        } else {
+            // Для десктопа - самый быстрый отклик
+            darkMediaQuery.addEventListener('change', () => {
+                applyTheme();
+                // Двойная проверка для надежности
+                setTimeout(applyTheme, 10);
+            });
+        }
+        
+        // Слушаем сообщения от родительского окна
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.theme) {
+                const theme = event.data.theme;
+                currentTheme = theme; // Обновляем кэш
+                body.classList.remove('force-light', 'force-dark');
+                body.classList.add(`force-${theme}`);
+                
+                const color = theme === 'dark' ? '#fff' : '#000';
+                body.style.color = color;
+                contentElement.style.color = color;
+                
+                forceRerender();
+            }
+        });
+        
+        // 6. Оптимизация для разных устройств и браузеров
+        if (isTelegram) {
+            // Специальная обработка для Telegram WebView
+            
+            // Слушаем события Telegram WebApp
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.onEvent('themeChanged', () => {
+                    setTimeout(applyTheme, 50);
+                });
+            }
+            
+            // Очень частое обновление для Telegram (каждые 2 секунды)
+            setInterval(() => {
+                const newTheme = detectTheme();
+                if (newTheme !== currentTheme) {
+                    applyTheme();
+                }
+            }, 2000);
+            
+            // Дополнительные проверки при взаимодействии пользователя
+            ['touchstart', 'click', 'scroll'].forEach(event => {
+                document.addEventListener(event, () => {
+                    setTimeout(() => {
+                        const newTheme = detectTheme();
+                        if (newTheme !== currentTheme) {
+                            applyTheme();
+                        }
+                    }, 100);
+                }, { passive: true });
+            });
+            
+        } else if (isiOS) {
+            // Для iOS - более частое обновление
+            let iosUpdateInterval = setInterval(() => {
+                applyTheme();
+            }, 1000);
+            
+            // Останавливаем интервал при неактивности
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    clearInterval(iosUpdateInterval);
+                } else {
+                    applyTheme();
+                    iosUpdateInterval = setInterval(applyTheme, 1000);
+                }
+            });
+        } else {
+            // Для Android и десктопа - более агрессивное отслеживание
+            let quickUpdateInterval = setInterval(() => {
+                const newTheme = detectTheme();
+                if (newTheme !== currentTheme) {
+                    applyTheme();
+                }
+            }, 100); // Проверяем каждые 100мс
+            
+            // Дополнительные события для Android
+            if (isMobile) {
+                window.addEventListener('orientationchange', () => {
+                    setTimeout(applyTheme, 50);
+                    setTimeout(applyTheme, 200);
+                });
+                
+                // Отслеживание изменений в системных настройках
+                document.addEventListener('resume', applyTheme);
+            }
+            
+            // Для десктопа - отслеживание активности окна
+            if (!isMobile) {
+                let isWindowActive = true;
+                window.addEventListener('blur', () => {
+                    isWindowActive = false;
+                });
+                window.addEventListener('focus', () => {
+                    isWindowActive = true;
+                    applyTheme();
+                    setTimeout(applyTheme, 50);
+                });
+                
+                // Проверяем тему чаще когда окно активно
+                setInterval(() => {
+                    if (isWindowActive) {
+                        const newTheme = detectTheme();
+                        if (newTheme !== currentTheme) {
+                            applyTheme();
+                        }
+                    }
+                }, 500);
+            }
+        }
+        
+        // 7. Дополнительные триггеры с немедленным обновлением
+        document.addEventListener('visibilitychange', () => {
+            applyTheme();
+            setTimeout(applyTheme, 100);
+        });
+        window.addEventListener('focus', () => {
+            applyTheme();
+            setTimeout(applyTheme, 50);
+        });
+        window.addEventListener('pageshow', () => {
+            applyTheme();
+            setTimeout(applyTheme, 50);
+        });
+        
+        // 8. Функция изменения размера iframe
+        function updateHeight() {
+            const height = Math.max(
+                document.documentElement.scrollHeight,
+                document.body.scrollHeight,
+                document.documentElement.offsetHeight,
+                document.body.offsetHeight
+            );
+            
+            try {
+                window.parent.postMessage({
+                    type: 'iframeResize',
+                    height: height
+                }, '*');
+            } catch (e) {
+                // Игнорируем ошибки cross-origin
+            }
+        }
+        
+        // 9. Инициализация
+        applyTheme();
+        updateHeight();
+        
+        // Наблюдатель за изменениями содержимого
+        const observer = new MutationObserver(function() {
+            updateHeight();
+            // Мгновенная проверка темы при изменении контента
+            applyTheme();
+        });
+        
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['class', 'style']
+        });
+        
+        // 10. Агрессивная начальная инициализация
+        requestAnimationFrame(applyTheme);
+        setTimeout(applyTheme, 0);
+        setTimeout(applyTheme, 100);
+        setTimeout(applyTheme, 250);
+    </script>
+</body>
+</html>
