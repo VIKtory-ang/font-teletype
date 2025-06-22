@@ -1,85 +1,75 @@
 <!DOCTYPE html>
-<html>
+<html style="background: transparent !important;">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Tektur:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Tektur', sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            /* Важно: прозрачный фон */
-            background: transparent !important;
-            /* Автоцвет текста */
-            color: var(--teletype-text-color, #000000);
-        }
-        #content {
-            text-align: center;
-            padding: 10px;
-            width: 100%;
-            box-sizing: border-box;
-            word-break: break-word;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Tektur:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light dark;
+    }
+
+    html, body {
+      background-color: transparent !important;
+      background: transparent !important;
+      margin: 0;
+      padding: 0;
+      font-family: 'Tektur', sans-serif;
+      color: var(--teletype-text-color, #000000);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #content {
+      background: transparent !important;
+      text-align: center;
+      padding: 10px;
+      width: 100%;
+      box-sizing: border-box;
+      word-break: break-word;
+    }
+  </style>
 </head>
 <body>
-    <div id="content"></div>
+  <div id="content"></div>
 
-    <script>
-        // Получаем текст из URL
-        const params = new URLSearchParams(window.location.search);
-        const content = document.getElementById('content');
-        content.textContent = decodeURIComponent(params.get('text') || "");
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const content = document.getElementById('content');
+    content.textContent = decodeURIComponent(params.get('text') || "");
 
-        // Определяем тему Teletype
-        function updateTheme() {
-            try {
-                // 1. Пытаемся определить тему через iframe
-                const iframeColor = window.getComputedStyle(parent.document.body).color;
-                const isDark = iframeColor === 'rgb(255, 255, 255)' || 
-                              (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-                
-                document.body.style.setProperty('--teletype-text-color', isDark ? '#ffffff' : '#000000');
-            } catch {
-                // 2. Fallback для случаев, когда доступ к parent запрещён
-                const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                document.body.style.setProperty('--teletype-text-color', isDark ? '#ffffff' : '#000000');
-            }
-        }
+    function updateTheme() {
+      const isDark = window.matchMedia &&
+                     window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const textColor = isDark ? '#ffffff' : '#000000';
+      document.body.style.setProperty('--teletype-text-color', textColor);
+      document.body.style.color = textColor;
+    }
 
-        // Корректировка высоты
-        function updateHeight() {
-            const height = document.documentElement.scrollHeight;
-            try {
-                window.parent.postMessage({
-                    type: 'iframeResize',
-                    height: height
-                }, '*');
-            } catch (e) {}
-        }
+    function updateHeight() {
+      const height = document.documentElement.scrollHeight;
+      try {
+        window.parent.postMessage({
+          type: 'iframeResize',
+          height: height
+        }, '*');
+      } catch (e) {}
+    }
 
-        // Запускаем всё
-        updateTheme();
-        updateHeight();
-        
-        // Следим за изменениями
-        new MutationObserver(updateHeight).observe(content, {
-            childList: true,
-            characterData: true,
-            subtree: true
-        });
-        
-        // Обновляем при изменении темы
-        if (window.matchMedia) {
-            window.matchMedia('(prefers-color-scheme: dark)').addListener(updateTheme);
-        }
-    </script>
+    updateTheme();
+    updateHeight();
+
+    new MutationObserver(updateHeight).observe(content, {
+      childList: true,
+      characterData: true,
+      subtree: true
+    });
+
+    if (window.matchMedia) {
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateTheme);
+    }
+  </script>
 </body>
 </html>
-
-
