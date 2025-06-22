@@ -8,19 +8,19 @@
         body {
             font-family: 'Tektur', sans-serif;
             margin: 0;
-            padding: 10 px;
-            /* Центрирование текста */
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            padding: 0;
+            /* Точно центрируем контент */
+            display: grid;
+            place-items: center;
             min-height: 100 vh;
-            box-sizing: border-box;
-            /* Автоподстройка под тему */
-            color: var (--text-color, inherit);
+            /* Автоцвет под тему */
+            color: var (--text-color, #000000);
         }
         #content {
             text-align: center;
-            max-width: 100 %;
+            padding: 10 px;
+            width: 100 %;
+            box-sizing: border-box;
         }
     </style>
 </head>
@@ -28,33 +28,38 @@
     <div id="content"></div>
 
     <script>
-        // Получаем текст из URL
+        // Получаем текст
         const params = new URLSearchParams(window.location.search);
-        document.getElementById('content').textContent = params.get('text') || "";
-
-        // Автоматически определяем тему
-        function detectTheme() {
+        const content = document.getElementById('content');
+        content.innerHTML = decodeURIComponent(params.get('text') || "");
+        
+        // Автоопределение темы
+        function updateTheme() {
             const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            document.body.style.setProperty('--text-color', isDark ? '#ffffff' : '#000000');
+            document.body.style.setProperty('--text-color', isDark ? '#FFF' : '#000');
         }
-
-        // Обновляем высоту iframe
+        
+        // Корректировка высоты
         function updateHeight() {
+            const height = Math.max(
+                document.documentElement.scrollHeight,
+                document.body.scrollHeight
+            );
             window.parent.postMessage({
                 type: 'iframeResize',
-                height: document.body.scrollHeight
+                height: height
             }, '*');
         }
 
-        detectTheme();
+        // Инициализация
+        updateTheme();
         updateHeight();
-        
-        // Следим за изменениями
-        new MutationObserver(updateHeight).observe(document.body, {
+        new MutationObserver(updateHeight).observe(content, {
             childList: true,
+            characterData: true,
             subtree: true
         });
-        window.matchMedia('(prefers-color-scheme: dark)').addListener(detectTheme);
+        window.matchMedia('(prefers-color-scheme: dark)').addListener(updateTheme);
     </script>
 </body>
 </html>
