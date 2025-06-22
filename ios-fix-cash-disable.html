@@ -63,10 +63,20 @@
             backface-visibility: hidden;
             transform: translateZ(0);
         }
+        #wrapper {
+            background-color: rgba(255, 0, 128, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            width: 70%;
+            box-sizing: border-box;
+            display: inline-block;
+        }
     </style>
 </head>
 <body>
-    <div id="content"></div>
+    <div id="wrapper">
+        <div id="content"></div>
+    </div>
     <script>
         // Кэшируем элементы
         const contentElement = document.getElementById('content');
