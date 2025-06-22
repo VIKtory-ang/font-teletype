@@ -27,7 +27,8 @@
             min-height: 100vh;
             background: transparent !important;
             text-align: center;
-            transition: color 0.3s ease;
+            /* Убираем transition для мгновенного переключения */
+            transition: none;
         }
         
         /* Базовые стили для светлой темы */
@@ -57,20 +58,30 @@
             width: 80%;
             box-sizing: border-box;
             word-break: break-word;
+            /* Принудительный рендеринг */
+            will-change: color;
+            backface-visibility: hidden;
+            transform: translateZ(0);
         }
     </style>
 </head>
 <body>
     <div id="content"></div>
     <script>
+        // Кэшируем элементы
+        const contentElement = document.getElementById('content');
+        const body = document.body;
+        
         // 1. Загрузка текста
         const params = new URLSearchParams(window.location.search);
-        document.getElementById('content').textContent = 
-            params.get('text') || "";
+        contentElement.textContent = params.get('text') || "";
 
         // 2. Определение устройства
         const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
         const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+        
+        // Переменная для отслеживания текущей темы
+        let currentTheme = null;
         
         // 3. Функция определения темы с множественными проверками
         function detectTheme() {
@@ -122,10 +133,13 @@
             return finalTheme;
         }
         
-        // 4. Применение темы
+        // 4. Применение темы с принудительным обновлением
         function applyTheme() {
             const theme = detectTheme();
-            const body = document.body;
+            
+            // Проверяем, изменилась ли тема
+            if (theme === currentTheme) return;
+            currentTheme = theme;
             
             // Очищаем предыдущие классы
             body.classList.remove('force-light', 'force-dark');
@@ -134,43 +148,177 @@
             if (theme === 'dark') {
                 body.classList.add('force-dark');
                 body.style.color = '#fff';
+                contentElement.style.color = '#fff';
             } else {
                 body.classList.add('force-light');
                 body.style.color = '#000';
+                contentElement.style.color = '#000';
             }
+            
+            // Принудительное обновление рендеринга
+            forceRerender();
             
             // Дополнительное принуждение для iOS
             if (isiOS) {
                 body.style.webkitFontSmoothing = 'subpixel-antialiased';
                 // Принудительный reflow
                 body.offsetHeight;
+                contentElement.offsetHeight;
             }
         }
         
-        // 5. Обработчики событий
+        // Функция принудительного перерендеринга (адаптивная под устройство)
+        function forceRerender() {
+            if (isiOS) {
+                // Для iOS - более агрессивный подход
+                body.style.display = 'none';
+                body.offsetHeight;
+                body.style.display = 'flex';
+                
+                const currentText = contentElement.textContent;
+                contentElement.textContent = '';
+                contentElement.offsetHeight;
+                contentElement.textContent = currentText;
+                
+                contentElement.style.transform = 'translateZ(0.1px)';
+                requestAnimationFrame(() => {
+                    contentElement.style.transform = 'translateZ(0)';
+                });
+            } else if (isMobile) {
+                // Для Android - оптимизированный подход
+                contentElement.style.opacity = '0.99';
+                requestAnimationFrame(() => {
+                    contentElement.style.opacity = '1';
+                });
+                
+                // Принудительный repaint
+                contentElement.style.transform = 'translate3d(0,0,0)';
+                contentElement.offsetHeight;
+                contentElement.style.transform = 'none';
+            } else {
+                // Для десктопа - легкий подход
+                contentElement.style.willChange = 'color';
+                requestAnimationFrame(() => {
+                    contentElement.style.willChange = 'auto';
+                });
+            }
+        }
+        
+        // 5. Обработчики событий (адаптивные под устройство)
+        let themeUpdateTimeout;
+        
         const darkMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        darkMediaQuery.addListener(applyTheme);
+        
+        if (isiOS) {
+            // Для iOS - с небольшой задержкой из-за особенностей системы
+            darkMediaQuery.addEventListener('change', () => {
+                setTimeout(applyTheme, 50);
+                setTimeout(applyTheme, 200);
+            });
+        } else if (isMobile) {
+            // Для Android - мгновенный отклик
+            darkMediaQuery.addEventListener('change', () => {
+                applyTheme();
+                requestAnimationFrame(applyTheme);
+            });
+        } else {
+            // Для десктопа - самый быстрый отклик
+            darkMediaQuery.addEventListener('change', () => {
+                applyTheme();
+                // Двойная проверка для надежности
+                setTimeout(applyTheme, 10);
+            });
+        }
         
         // Слушаем сообщения от родительского окна
         window.addEventListener('message', function(event) {
             if (event.data && event.data.theme) {
                 const theme = event.data.theme;
-                const body = document.body;
+                currentTheme = theme; // Обновляем кэш
                 body.classList.remove('force-light', 'force-dark');
                 body.classList.add(`force-${theme}`);
-                body.style.color = theme === 'dark' ? '#fff' : '#000';
+                
+                const color = theme === 'dark' ? '#fff' : '#000';
+                body.style.color = color;
+                contentElement.style.color = color;
+                
+                forceRerender();
             }
         });
         
-        // 6. Периодическое обновление для iOS
+        // 6. Оптимизация для разных устройств
         if (isiOS) {
-            setInterval(applyTheme, 2000);
+            // Для iOS - более частое обновление
+            let iosUpdateInterval = setInterval(() => {
+                applyTheme();
+            }, 1000);
+            
+            // Останавливаем интервал при неактивности
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    clearInterval(iosUpdateInterval);
+                } else {
+                    applyTheme();
+                    iosUpdateInterval = setInterval(applyTheme, 1000);
+                }
+            });
+        } else {
+            // Для Android и десктопа - более агрессивное отслеживание
+            let quickUpdateInterval = setInterval(() => {
+                const newTheme = detectTheme();
+                if (newTheme !== currentTheme) {
+                    applyTheme();
+                }
+            }, 100); // Проверяем каждые 100мс
+            
+            // Дополнительные события для Android
+            if (isMobile) {
+                window.addEventListener('orientationchange', () => {
+                    setTimeout(applyTheme, 50);
+                    setTimeout(applyTheme, 200);
+                });
+                
+                // Отслеживание изменений в системных настройках
+                document.addEventListener('resume', applyTheme);
+            }
+            
+            // Для десктопа - отслеживание активности окна
+            if (!isMobile) {
+                let isWindowActive = true;
+                window.addEventListener('blur', () => {
+                    isWindowActive = false;
+                });
+                window.addEventListener('focus', () => {
+                    isWindowActive = true;
+                    applyTheme();
+                    setTimeout(applyTheme, 50);
+                });
+                
+                // Проверяем тему чаще когда окно активно
+                setInterval(() => {
+                    if (isWindowActive) {
+                        const newTheme = detectTheme();
+                        if (newTheme !== currentTheme) {
+                            applyTheme();
+                        }
+                    }
+                }, 500);
+            }
         }
         
-        // 7. Дополнительные триггеры
-        document.addEventListener('visibilitychange', applyTheme);
-        window.addEventListener('focus', applyTheme);
-        window.addEventListener('pageshow', applyTheme);
+        // 7. Дополнительные триггеры с немедленным обновлением
+        document.addEventListener('visibilitychange', () => {
+            applyTheme();
+            setTimeout(applyTheme, 100);
+        });
+        window.addEventListener('focus', () => {
+            applyTheme();
+            setTimeout(applyTheme, 50);
+        });
+        window.addEventListener('pageshow', () => {
+            applyTheme();
+            setTimeout(applyTheme, 50);
+        });
         
         // 8. Функция изменения размера iframe
         function updateHeight() {
@@ -198,19 +346,22 @@
         // Наблюдатель за изменениями содержимого
         const observer = new MutationObserver(function() {
             updateHeight();
-            // Дополнительная проверка темы при изменении контента
-            setTimeout(applyTheme, 100);
+            // Мгновенная проверка темы при изменении контента
+            applyTheme();
         });
         
         observer.observe(document.body, {
             childList: true,
             subtree: true,
-            attributes: true
+            attributes: true,
+            attributeFilter: ['class', 'style']
         });
         
-        // 10. Финальная проверка через небольшую задержку
-        setTimeout(applyTheme, 500);
-        setTimeout(applyTheme, 1000);
+        // 10. Агрессивная начальная инициализация
+        requestAnimationFrame(applyTheme);
+        setTimeout(applyTheme, 0);
+        setTimeout(applyTheme, 100);
+        setTimeout(applyTheme, 250);
     </script>
 </body>
 </html>
