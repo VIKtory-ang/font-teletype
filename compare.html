@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Tektur:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      font-family: 'Tektur', sans-serif;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .card {
+      display: flex;
+      flex-direction: row;
+      background: rgba(233, 30, 99, 0.15);
+      border: 2px solid #e91e63;
+      border-radius: 16px;
+      padding: 16px 24px;
+      max-width: 800px;
+      width: 100%;
+      gap: 40px;
+      box-sizing: border-box;
+    }
+
+    .column {
+      flex: 1;
+    }
+
+    .title {
+      font-weight: 500;
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: #e91e63;
+      text-transform: uppercase;
+    }
+
+    .item {
+      margin-bottom: 8px;
+      font-size: 18px;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 600px) {
+      .card {
+        flex-direction: column;
+        gap: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="column">
+      <div class="title">Было</div>
+      <div class="item" id="before1"></div>
+      <div class="item" id="before2"></div>
+      <div class="item" id="before3"></div>
+    </div>
+    <div class="column">
+      <div class="title">Стало</div>
+      <div class="item" id="after1"></div>
+      <div class="item" id="after2"></div>
+      <div class="item" id="after3"></div>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const before = [
+      decodeURIComponent(params.get('before1') || ''),
+      decodeURIComponent(params.get('before2') || ''),
+      decodeURIComponent(params.get('before3') || '')
+    ];
+
+    const after = [
+      decodeURIComponent(params.get('after1') || ''),
+      decodeURIComponent(params.get('after2') || ''),
+      decodeURIComponent(params.get('after3') || '')
+    ];
+
+    before.forEach((text, i) => {
+      const el = document.getElementById(`before${i+1}`);
+      if (el) el.textContent = text;
+    });
+
+    after.forEach((text, i) => {
+      const el = document.getElementById(`after${i+1}`);
+      if (el) el.textContent = text;
+    });
+  </script>
+</body>
+</html>
