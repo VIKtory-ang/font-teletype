@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Tektur:wght@400;500&display=swap" rel="stylesheet">
     <style>
+        :root {
+            color-scheme: light dark;
+        }
+
         body {
             font-family: 'Tektur', sans-serif;
             margin: 0;
@@ -13,11 +17,10 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            /* Важно: прозрачный фон */
             background: transparent !important;
-            /* Автоцвет текста */
             color: var(--teletype-text-color, #000000);
         }
+
         #content {
             text-align: center;
             padding: 10px;
@@ -36,20 +39,14 @@
         const content = document.getElementById('content');
         content.textContent = decodeURIComponent(params.get('text') || "");
 
-        // Определяем тему Teletype
+        // Обновление темы
         function updateTheme() {
-            try {
-                // 1. Пытаемся определить тему через iframe
-                const iframeColor = window.getComputedStyle(parent.document.body).color;
-                const isDark = iframeColor === 'rgb(255, 255, 255)' || 
-                              (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-                
-                document.body.style.setProperty('--teletype-text-color', isDark ? '#ffffff' : '#000000');
-            } catch {
-                // 2. Fallback для случаев, когда доступ к parent запрещён
-                const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                document.body.style.setProperty('--teletype-text-color', isDark ? '#ffffff' : '#000000');
-            }
+            const isDark = window.matchMedia &&
+                           window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            const textColor = isDark ? '#ffffff' : '#000000';
+            document.body.style.setProperty('--teletype-text-color', textColor);
+            document.body.style.color = textColor;
         }
 
         // Корректировка высоты
@@ -63,20 +60,20 @@
             } catch (e) {}
         }
 
-        // Запускаем всё
+        // Инициализация
         updateTheme();
         updateHeight();
-        
-        // Следим за изменениями
+
+        // Следим за изменениями контента
         new MutationObserver(updateHeight).observe(content, {
             childList: true,
             characterData: true,
             subtree: true
         });
-        
-        // Обновляем при изменении темы
+
+        // Следим за сменой темы
         if (window.matchMedia) {
-            window.matchMedia('(prefers-color-scheme: dark)').addListener(updateTheme);
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateTheme);
         }
     </script>
 </body>
