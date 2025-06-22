@@ -51,28 +51,25 @@
         body.force-dark {
             color: var(--text-color-dark) !important;
         }
-        
-        #content {
-            text-align: center;
-            padding: 10px;
-            width: 60%;
+        #wrapper {
+            background-color: rgba(255, 0, 128, 0.3); /* Малиновый фон с 30% прозрачности */
+            border-radius: 16px;
+            padding: 16px;
+            width: 100%;
             box-sizing: border-box;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        #content {
             word-break: break-word;
-            /* Принудительный рендеринг */
             will-change: color;
             backface-visibility: hidden;
             transform: translateZ(0);
         }
-       #wrapper {
-        background-color: rgba(255, 0, 128, 0.3); /* Малиновый с 30% прозрачностью */
-        border-radius: 16px;
-        padding: 20px;
-        box-sizing: border-box;
-        width: 100%;
-        max-width: 800px; /* Ограничим, чтобы на больших экранах не расползалось */
-        margin: 0 auto; /* Центрируем по горизонтали */
-        text-align: center;
-    }
+    
 
 /* На маленьких экранах — разрешаем перенос */
 @media (max-width: 500px) {
