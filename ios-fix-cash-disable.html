@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Отключаем кеширование для этой страницы -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <style>
+        body {
+            font-family: 'Tektur', -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: transparent !important;
+            /* Изначальный цвет будет вычислен при загрузке */
+            color: var(--teletype-text-color);
+        }
+        #content {
+            text-align: center;
+            padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div id="content"></div>
+
+    <script>
+        // Сильно упрощённая версия без сложных зависимостей
+        (function() {
+            const params = new URLSearchParams(window.location.search);
+            const content = document.getElementById('content');
+            content.textContent = decodeURIComponent(params.get('text') || "");
+            
+            // Функция для определения темы
+            function getThemeColor() {
+                // 1. Пытаемся определить через iframe
+                try {
+                    const iframeColor = window.parent.getComputedStyle(
+                        window.parent.document.body
+                    ).color;
+                    return iframeColor === 'rgb(255, 255, 255)' ? '#FFF' : '#000';
+                } catch (e) {}
+                
+                // 2. Проверяем системные настройки
+                return window.matchMedia('(prefers-color-scheme: dark)').matches ? '#FFF' : '#000';
+            }
+            
+            // Принудительное обновление темы
+            function updateTheme() {
+                document.body.style.setProperty(
+                    '--teletype-text-color', 
+                    getThemeColor()
+                );
+                
+                // iOS/Safari fix: принудительный рефлоу
+                document.body.offsetHeight;
+            }
+            
+            // Обновляем каждые 500мс (для iOS)
+            const themeInterval = setInterval(updateTheme, 500);
+            
+            // Остановка после 10 секунд (экономия батареи)
+            setTimeout(() => clearInterval(themeInterval), 10000);
+            
+            // Инициализация
+            updateTheme();
+            
+            // Для Safari добавляем обработчик изменения видимости
+            document.addEventListener('visibilitychange', updateTheme);
+            window.addEventListener('focus', updateTheme);
+        })();
+    </script>
+</body>
+</html>
