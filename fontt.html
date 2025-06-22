@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html style="background: transparent !important;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,24 +10,25 @@
         }
 
         html, body {
-            background: transparent ! important;
-            font-family: 'Tektur', sans-serif;
+            background-color: transparent !important;
+            background: transparent !important;
             margin: 0;
             padding: 0;
+            font-family: 'Tektur', sans-serif;
+            color: var (--teletype-text-color, #000000);
+            min-height: 100 vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100 vh;
-            color: var (--teletype-text-color, #000000);
         }
 
         #content {
+            background: transparent !important;
             text-align: center;
             padding: 10 px;
             width: 100 %;
             box-sizing: border-box;
             word-break: break-word;
-            background: transparent ! important;
         }
     </style>
 </head>
