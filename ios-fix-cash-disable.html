@@ -23,6 +23,7 @@
             background: transparent !important;
             color: var(--text-color, #000);
             text-align: center;
+            overflow: hidden;
         }
     </style>
 </head>
@@ -61,6 +62,27 @@
         // 5. Дополнительные триггеры обновления
         document.addEventListener('visibilitychange', updateTheme);
         window.addEventListener('focus', updateTheme);
+
+
+
+
+        // Точный расчет высоты без скролла
+        function updateHeight() {
+            const height = document.documentElement.scrollHeight;
+            window.parent.postMessage({
+                type: 'iframeResize',
+                height: height
+            }, '*');
+}
+
+// Инициализация
+    updateHeight();
+    new MutationObserver(updateHeight).observe(document.body, {
+        childList: true,
+        subtree: true
+});
+
+        
     </script>
 </body>
 </html>
