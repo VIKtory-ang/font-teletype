@@ -12,6 +12,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Tektur:wght@400;500&display=swap" rel="stylesheet">
     
     <style>
+        :root {
+            --text-color-light: #000;
+            --text-color-dark: #fff;
+        }
+        
         body {
             font-family: 'Tektur', -apple-system, sans-serif;
             margin: 0;
@@ -21,75 +26,191 @@
             align-items: center;
             min-height: 100vh;
             background: transparent !important;
-            color: var(--text-color, #000);
             text-align: center;
-           
+            transition: color 0.3s ease;
         }
+        
+        /* Базовые стили для светлой темы */
+        body {
+            color: var(--text-color-light);
+        }
+        
+        /* Стили для темной темы */
+        @media (prefers-color-scheme: dark) {
+            body {
+                color: var(--text-color-dark);
+            }
+        }
+        
+        /* Принудительные классы для iOS */
+        body.force-light {
+            color: var(--text-color-light) !important;
+        }
+        
+        body.force-dark {
+            color: var(--text-color-dark) !important;
+        }
+        
         #content {
-         text-align: center;
-          padding: 10px;
-          width: 80%;
-          box-sizing: border-box;
-          word-break: break-word;
+            text-align: center;
+            padding: 10px;
+            width: 80%;
+            box-sizing: border-box;
+            word-break: break-word;
         }
     </style>
 </head>
 <body>
     <div id="content"></div>
-
     <script>
         // 1. Загрузка текста
         const params = new URLSearchParams(window.location.search);
         document.getElementById('content').textContent = 
-            decodeURIComponent(params.get('text') || "");
+            params.get('text') || "";
 
-        // 2. Определение темы
-        function updateTheme() {
-            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            document.body.style.setProperty('--text-color', isDark ? '#FFF' : '#000');
-        }
-
-        // 3. Ядерный фикс для iOS
+        // 2. Определение устройства
         const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-        if (isiOS) {
-            document.body.style.webkitFontSmoothing = 'subpixel-antialiased';
-            setInterval(() => {
-                document.body.style.display = 'none';
-                setTimeout(() => {
-                    document.body.style.display = 'flex';
-                    updateTheme(); // Принудительное обновление
-                }, 50);
-            }, 1000);
+        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+        
+        // 3. Функция определения темы с множественными проверками
+        function detectTheme() {
+            // Способ 1: через media query
+            const darkMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+            
+            // Способ 2: через анализ цвета родительского элемента (для iframe)
+            let parentTheme = null;
+            try {
+                if (window.parent !== window) {
+                    // Пытаемся получить информацию от родительского окна
+                    const parentBody = window.parent.document.body;
+                    const parentStyles = window.parent.getComputedStyle(parentBody);
+                    const parentBg = parentStyles.backgroundColor;
+                    const parentColor = parentStyles.color;
+                    
+                    // Анализируем цвета родителя
+                    if (parentBg && parentBg !== 'rgba(0, 0, 0, 0)') {
+                        const rgb = parentBg.match(/\d+/g);
+                        if (rgb) {
+                            const brightness = (parseInt(rgb[0]) * 299 + parseInt(rgb[1]) * 587 + parseInt(rgb[2]) * 114) / 1000;
+                            parentTheme = brightness < 128 ? 'dark' : 'light';
+                        }
+                    }
+                }
+            } catch (e) {
+                // Если не можем получить доступ к родителю - игнорируем
+            }
+            
+            // Способ 3: через время суток (fallback для iOS)
+            const hour = new Date().getHours();
+            const timeBasedTheme = (hour >= 20 || hour <= 7) ? 'dark' : 'light';
+            
+            // Определяем финальную тему
+            let finalTheme;
+            if (parentTheme) {
+                finalTheme = parentTheme;
+            } else if (darkMediaQuery.matches) {
+                finalTheme = 'dark';
+            } else {
+                // Для iOS используем комбинированный подход
+                if (isiOS) {
+                    finalTheme = timeBasedTheme;
+                } else {
+                    finalTheme = 'light';
+                }
+            }
+            
+            return finalTheme;
         }
-
-        // 4. Стандартная инициализация
-        updateTheme();
-        setInterval(updateTheme, isiOS ? 500 : 30000); // Для iOS проверяем чаще
         
-        // 5. Дополнительные триггеры обновления
-        document.addEventListener('visibilitychange', updateTheme);
-        window.addEventListener('focus', updateTheme);
-
-
-
-
-        // Точный расчет высоты без скролла
+        // 4. Применение темы
+        function applyTheme() {
+            const theme = detectTheme();
+            const body = document.body;
+            
+            // Очищаем предыдущие классы
+            body.classList.remove('force-light', 'force-dark');
+            
+            // Применяем новую тему
+            if (theme === 'dark') {
+                body.classList.add('force-dark');
+                body.style.color = '#fff';
+            } else {
+                body.classList.add('force-light');
+                body.style.color = '#000';
+            }
+            
+            // Дополнительное принуждение для iOS
+            if (isiOS) {
+                body.style.webkitFontSmoothing = 'subpixel-antialiased';
+                // Принудительный reflow
+                body.offsetHeight;
+            }
+        }
+        
+        // 5. Обработчики событий
+        const darkMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        darkMediaQuery.addListener(applyTheme);
+        
+        // Слушаем сообщения от родительского окна
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.theme) {
+                const theme = event.data.theme;
+                const body = document.body;
+                body.classList.remove('force-light', 'force-dark');
+                body.classList.add(`force-${theme}`);
+                body.style.color = theme === 'dark' ? '#fff' : '#000';
+            }
+        });
+        
+        // 6. Периодическое обновление для iOS
+        if (isiOS) {
+            setInterval(applyTheme, 2000);
+        }
+        
+        // 7. Дополнительные триггеры
+        document.addEventListener('visibilitychange', applyTheme);
+        window.addEventListener('focus', applyTheme);
+        window.addEventListener('pageshow', applyTheme);
+        
+        // 8. Функция изменения размера iframe
         function updateHeight() {
-            const height = document.documentElement.scrollHeight;
-            window.parent.postMessage({
-                type: 'iframeResize',
-                height: height
-            }, '*');
-}
-
-// Инициализация
-    updateHeight();
-    new MutationObserver(updateHeight).observe(document.body, {
-        childList: true,
-        subtree: true
-});
-
+            const height = Math.max(
+                document.documentElement.scrollHeight,
+                document.body.scrollHeight,
+                document.documentElement.offsetHeight,
+                document.body.offsetHeight
+            );
+            
+            try {
+                window.parent.postMessage({
+                    type: 'iframeResize',
+                    height: height
+                }, '*');
+            } catch (e) {
+                // Игнорируем ошибки cross-origin
+            }
+        }
         
+        // 9. Инициализация
+        applyTheme();
+        updateHeight();
+        
+        // Наблюдатель за изменениями содержимого
+        const observer = new MutationObserver(function() {
+            updateHeight();
+            // Дополнительная проверка темы при изменении контента
+            setTimeout(applyTheme, 100);
+        });
+        
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true
+        });
+        
+        // 10. Финальная проверка через небольшую задержку
+        setTimeout(applyTheme, 500);
+        setTimeout(applyTheme, 1000);
     </script>
 </body>
 </html>
