@@ -24,35 +24,42 @@
       color: #fff;
       position: relative;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      overflow-wrap: break-word;
     }
 
     .card::before {
       content: attr(data-year);
       position: absolute;
-      left: -60px;
+      left: -52px;
       top: 16px;
-      font-size: 16px;
+      font-size: 14px;
       color: #e91e63;
       font-weight: bold;
+      white-space: nowrap;
     }
 
     .title {
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 500;
       margin-bottom: 8px;
       color: #e91e63;
     }
 
     .text {
-      font-size: 16px;
+      font-size: 15px;
       line-height: 1.5;
     }
 
     @media (max-width: 600px) {
+      .card {
+        padding-left: 16px;
+      }
       .card::before {
         position: static;
         display: block;
         margin-bottom: 8px;
+        font-size: 14px;
+        text-align: left;
       }
     }
   </style>
