@@ -55,7 +55,7 @@
         #content {
             text-align: center;
             padding: 10px;
-            width: 60%;
+            width: 80%;
             box-sizing: border-box;
             word-break: break-word;
             /* Принудительный рендеринг */
@@ -63,7 +63,6 @@
             backface-visibility: hidden;
             transform: translateZ(0);
         }
-        
     </style>
 </head>
 <body>
@@ -237,7 +236,7 @@
                 const theme = event.data.theme;
                 currentTheme = theme; // Обновляем кэш
                 body.classList.remove('force-light', 'force-dark');
-                body.classList.add(force-${theme});
+                body.classList.add(`force-${theme}`);
                 
                 const color = theme === 'dark' ? '#fff' : '#000';
                 body.style.color = color;
