@@ -9,18 +9,21 @@
             font-family: 'Tektur', sans-serif;
             margin: 0;
             padding: 0;
-            /* Точно центрируем контент */
-            display: grid;
-            place-items: center;
-            min-height: 100 vh;
-            /* Автоцвет под тему */
-            color: var (--text-color, #000000);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            /* Важно: прозрачный фон */
+            background: transparent !important;
+            /* Автоцвет текста */
+            color: var(--teletype-text-color, #000000);
         }
         #content {
             text-align: center;
-            padding: 10 px;
-            width: 100 %;
+            padding: 10px;
+            width: 100%;
             box-sizing: border-box;
+            word-break: break-word;
         }
     </style>
 </head>
@@ -28,38 +31,53 @@
     <div id="content"></div>
 
     <script>
-        // Получаем текст
+        // Получаем текст из URL
         const params = new URLSearchParams(window.location.search);
         const content = document.getElementById('content');
-        content.innerHTML = decodeURIComponent(params.get('text') || "");
-        
-        // Автоопределение темы
+        content.textContent = decodeURIComponent(params.get('text') || "");
+
+        // Определяем тему Teletype
         function updateTheme() {
-            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            document.body.style.setProperty('--text-color', isDark ? '#FFF' : '#000');
-        }
-        
-        // Корректировка высоты
-        function updateHeight() {
-            const height = Math.max(
-                document.documentElement.scrollHeight,
-                document.body.scrollHeight
-            );
-            window.parent.postMessage({
-                type: 'iframeResize',
-                height: height
-            }, '*');
+            try {
+                // 1. Пытаемся определить тему через iframe
+                const iframeColor = window.getComputedStyle(parent.document.body).color;
+                const isDark = iframeColor === 'rgb(255, 255, 255)' || 
+                              (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                
+                document.body.style.setProperty('--teletype-text-color', isDark ? '#ffffff' : '#000000');
+            } catch {
+                // 2. Fallback для случаев, когда доступ к parent запрещён
+                const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.body.style.setProperty('--teletype-text-color', isDark ? '#ffffff' : '#000000');
+            }
         }
 
-        // Инициализация
+        // Корректировка высоты
+        function updateHeight() {
+            const height = document.documentElement.scrollHeight;
+            try {
+                window.parent.postMessage({
+                    type: 'iframeResize',
+                    height: height
+                }, '*');
+            } catch (e) {}
+        }
+
+        // Запускаем всё
         updateTheme();
         updateHeight();
+        
+        // Следим за изменениями
         new MutationObserver(updateHeight).observe(content, {
             childList: true,
             characterData: true,
             subtree: true
         });
-        window.matchMedia('(prefers-color-scheme: dark)').addListener(updateTheme);
+        
+        // Обновляем при изменении темы
+        if (window.matchMedia) {
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(updateTheme);
+        }
     </script>
 </body>
 </html>
