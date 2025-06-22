@@ -55,7 +55,7 @@
         #content {
             text-align: center;
             padding: 10px;
-            width: 60%;
+            width: 80%;
             box-sizing: border-box;
             word-break: break-word;
             /* Принудительный рендеринг */
@@ -63,7 +63,6 @@
             backface-visibility: hidden;
             transform: translateZ(0);
         }
-        
     </style>
 </head>
 <body>
@@ -75,7 +74,8 @@
         
         // 1. Загрузка текста
         const params = new URLSearchParams(window.location.search);
-        contentElement.textContent = params.get('text') || "";
+        const text = params.get('text') || "Тестовый текст для проверки смены темы. Переключите тему устройства чтобы увидеть быстрое обновление цвета текста.";
+        contentElement.textContent = text;
 
         // 2. Определение устройства
         const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -170,12 +170,15 @@
         
         // Функция принудительного перерендеринга (адаптивная под устройство)
         function forceRerender() {
+            // Сначала проверяем, что текст есть
+            if (!contentElement.textContent) {
+                const params = new URLSearchParams(window.location.search);
+                const text = params.get('text') || "Тестовый текст для проверки смены темы";
+                contentElement.textContent = text;
+            }
+            
             if (isiOS) {
                 // Для iOS - более агрессивный подход
-                body.style.display = 'none';
-                body.offsetHeight;
-                body.style.display = 'flex';
-                
                 const currentText = contentElement.textContent;
                 contentElement.textContent = '';
                 contentElement.offsetHeight;
@@ -237,7 +240,7 @@
                 const theme = event.data.theme;
                 currentTheme = theme; // Обновляем кэш
                 body.classList.remove('force-light', 'force-dark');
-                body.classList.add(force-${theme});
+                body.classList.add(`force-${theme}`);
                 
                 const color = theme === 'dark' ? '#fff' : '#000';
                 body.style.color = color;
