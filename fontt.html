@@ -9,7 +9,8 @@
             color-scheme: light dark;
         }
 
-        body {
+        html, body {
+            background: transparent !important;
             font-family: 'Tektur', sans-serif;
             margin: 0;
             padding: 0;
@@ -17,7 +18,6 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background: transparent !important;
             color: var(--teletype-text-color, #000000);
         }
 
@@ -27,6 +27,7 @@
             width: 100%;
             box-sizing: border-box;
             word-break: break-word;
+            background: transparent !important;
         }
     </style>
 </head>
@@ -34,12 +35,10 @@
     <div id="content"></div>
 
     <script>
-        // Получаем текст из URL
         const params = new URLSearchParams(window.location.search);
         const content = document.getElementById('content');
         content.textContent = decodeURIComponent(params.get('text') || "");
 
-        // Обновление темы
         function updateTheme() {
             const isDark = window.matchMedia &&
                            window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -49,7 +48,6 @@
             document.body.style.color = textColor;
         }
 
-        // Корректировка высоты
         function updateHeight() {
             const height = document.documentElement.scrollHeight;
             try {
@@ -60,18 +58,15 @@
             } catch (e) {}
         }
 
-        // Инициализация
         updateTheme();
         updateHeight();
 
-        // Следим за изменениями контента
         new MutationObserver(updateHeight).observe(content, {
             childList: true,
             characterData: true,
             subtree: true
         });
 
-        // Следим за сменой темы
         if (window.matchMedia) {
             window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateTheme);
         }
