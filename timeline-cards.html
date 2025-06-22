@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Tektur:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: 'Tektur', sans-serif;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-sizing: border-box;
+    }
+
+    .card {
+      background: rgba(233, 30, 99, 0.1);
+      border-left: 4px solid #e91e63;
+      border-radius: 12px;
+      padding: 16px 20px;
+      color: #fff;
+      position: relative;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .card::before {
+      content: attr(data-year);
+      position: absolute;
+      left: -60px;
+      top: 16px;
+      font-size: 16px;
+      color: #e91e63;
+      font-weight: bold;
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: #e91e63;
+    }
+
+    .text {
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 600px) {
+      .card::before {
+        position: static;
+        display: block;
+        margin-bottom: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="card" data-year="2017">
+    <div class="title">Скромное начало</div>
+    <div class="text">Основанные при Пенсильванском университете, Пантеры начинали как и сотни других университетских команд: уверенные, но скучные. Надёжные, но незапоминающиеся.</div>
+  </div>
+  <div class="card" data-year="2019">
+    <div class="title">Расцвет</div>
+    <div class="text">Они больше не атаковали в лоб. Выслеживали. Выжидали. Били точно. Каждый матч — спектакль контроля. Новый стиль стал узнаваем.</div>
+  </div>
+  <div class="card" data-year="2021">
+    <div class="title">Испытание</div>
+    <div class="text">Команда понесла удар — Миллер ушёл из жизни. Но его система и стиль остались. Пантеры не сдались — они выпрямились и пошли дальше.</div>
+  </div>
+  <div class="card" data-year="Сегодня">
+    <div class="title">Наследие</div>
+    <div class="text">Сегодня Пантеры — это те, кто умеет ждать, думать, жалить. Им завидуют, их уважают. Они улыбаются — зная, что доска будет их.</div>
+  </div>
+</body>
+</html>
