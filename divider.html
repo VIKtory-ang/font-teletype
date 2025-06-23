@@ -35,15 +35,20 @@
   }
 
   /* анимацию включаем/выключаем классом .animate */
-  .divider.animate::before{
-    animation:sweep 3s linear infinite;
-  }
+ 
+  .divider.animate::before {
+  animation: sweep 5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
 
-  /* едем от -30 % до 100 % ширины контейнера */
-  @keyframes sweep{
-    from{left:-30%;}
-    to  {left:100%;}
-  }
+@keyframes sweep {
+  0%   { left: -30%; }
+  85%  { left: 100%; }
+  100% { left: -30%; }
+}
+
+
+
+  
 </style>
 </head>
 <body>
